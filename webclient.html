@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STOMP WebSocket Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+    <h2>차량 속도 데이터 수신</h2>
+    <div id="speed">속도: - km/h</div>
+
+    <script>
+        // WebSocket 및 STOMP 설정
+        const socket = new SockJS('http://15.164.200.30:8080/socket'); // 서버의 엔드포인트 설정에 맞춰 연결합니다.
+        const stompClient = Stomp.over(socket);
+
+        // 디버깅 로그 활성화 (필요한 경우 사용)
+        stompClient.debug = function (str) {
+            console.log(str);
+        };
+
+        // STOMP 연결 시도
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            // /topic/sendKmH 경로에서 메시지 구독
+            stompClient.subscribe('/topic/km-h', function (message) {
+                const speed = message.body; //message.body가 바로 변화량이에여
+                document.getElementById('speed').innerText = `속도: ${speed} km/h`;
+                console.log(`Received speed: ${speed} km/h`);
+            });
+        }, function (error) {
+            console.error('STOMP connection error:', error);
+        });
+
+        // WebSocket 연결 에러 처리
+        stompClient.onWebSocketError = function (error) {
+            console.error('WebSocket error:', error);
+        };
+    </script>
+</body>
+</html>
